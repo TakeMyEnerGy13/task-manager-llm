@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { llmApi } from '../api/llm'
 import type { SubtaskProposal } from '../api/llm'
-import type { Task, TaskCreate } from '../api/tasks'
+import type { Priority, Task, TaskCreate } from '../api/tasks'
 import { useCreateTask, useUpdateTask } from '../hooks/useTasks'
 import { Button } from './ui/Button'
 import { Dialog } from './ui/Dialog'
@@ -39,13 +39,15 @@ function CategorizeDialog({ task, onClose }: { task: Task; onClose: () => void }
   const [error, setError] = useState<string | null>(null)
   const updateTask = useUpdateTask()
 
-  useState(() => {
+  useEffect(() => {
+    let cancelled = false
     llmApi
       .categorize(task.title, task.description)
-      .then(setResult)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-  })
+      .then((r) => { if (!cancelled) setResult(r) })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Ошибка') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [task.id])
 
   async function handleApply() {
     if (!result) return
@@ -105,15 +107,15 @@ function DecomposeDialog({ task, onClose }: { task: Task; onClose: () => void })
   const createTask = useCreateTask()
   const [saving, setSaving] = useState(false)
 
-  useState(() => {
+  useEffect(() => {
+    let cancelled = false
     llmApi
       .decompose(task.title, task.description)
-      .then((res) => {
-        setEdited(res.subtasks.map((s) => ({ ...s })))
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-  })
+      .then((res) => { if (!cancelled) setEdited(res.subtasks.map((s) => ({ ...s }))) })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Ошибка') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [task.id])
 
   async function handleCreateAll() {
     setSaving(true)
@@ -187,17 +189,19 @@ function SuggestPriorityDialog({ task, onClose }: { task: Task; onClose: () => v
 
   const LABELS: Record<string, string> = { low: 'Низкий', medium: 'Средний', high: 'Высокий' }
 
-  useState(() => {
+  useEffect(() => {
+    let cancelled = false
     llmApi
       .suggestPriority(task.title, task.description, task.due_date)
-      .then(setResult)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-  })
+      .then((r) => { if (!cancelled) setResult(r) })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Ошибка') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [task.id])
 
   async function handleApply() {
     if (!result) return
-    await updateTask.mutateAsync({ id: task.id, data: { priority: result.priority as any } })
+    await updateTask.mutateAsync({ id: task.id, data: { priority: result.priority as Priority } })
     toast.success(`Приоритет «${LABELS[result.priority]}» применён`)
     onClose()
   }
@@ -245,15 +249,19 @@ export function WorkloadSummaryDialog({ open, onClose }: WorkloadDialogProps) {
   const [result, setResult] = useState<{ summary: string; overdue_count: number; upcoming_count: number } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  useState(() => {
+  useEffect(() => {
     if (!open) return
+    let cancelled = false
     setLoading(true)
+    setResult(null)
+    setError(null)
     llmApi
       .workloadSummary()
-      .then(setResult)
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false))
-  })
+      .then((r) => { if (!cancelled) setResult(r) })
+      .catch((e: unknown) => { if (!cancelled) setError(e instanceof Error ? e.message : 'Ошибка') })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [open])
 
   return (
     <Dialog open={open} title="Сводка нагрузки" onClose={onClose}>

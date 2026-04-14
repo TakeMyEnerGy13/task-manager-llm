@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
-from app.errors import NotFoundError
+from app.errors import DomainValidationError, NotFoundError
 from app.models import Task
 from app.schemas import TaskCreate, TaskUpdate
 
@@ -12,7 +12,17 @@ class TaskRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def _validate_parent(self, parent_id: int | None, task_id: int | None = None) -> None:
+        if parent_id is None:
+            return
+        parent = self.db.get(Task, parent_id)
+        if parent is None:
+            raise DomainValidationError(f"Parent task {parent_id} does not exist")
+        if task_id is not None and parent_id == task_id:
+            raise DomainValidationError("A task cannot be its own parent")
+
     def create(self, data: TaskCreate) -> Task:
+        self._validate_parent(data.parent_id)
         task = Task(**data.model_dump())
         self.db.add(task)
         self.db.commit()
@@ -70,7 +80,10 @@ class TaskRepository:
 
     def update(self, task_id: int, data: TaskUpdate) -> Task:
         task = self.get(task_id)
-        for field, value in data.model_dump(exclude_unset=True).items():
+        updates = data.model_dump(exclude_unset=True)
+        if "parent_id" in updates:
+            self._validate_parent(updates["parent_id"], task_id=task_id)
+        for field, value in updates.items():
             setattr(task, field, value)
         self.db.commit()
         self.db.refresh(task)

@@ -3,14 +3,18 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from app.errors import (
     DomainValidationError,
     LLMUpstreamError,
     NotFoundError,
     domain_validation_handler,
+    http_exception_handler,
     llm_upstream_handler,
     not_found_handler,
     request_validation_handler,
+    unhandled_exception_handler,
 )
 
 app = FastAPI(title="Task Manager LLM", version="0.1.0")
@@ -27,6 +31,8 @@ app.add_exception_handler(NotFoundError, not_found_handler)  # type: ignore[arg-
 app.add_exception_handler(DomainValidationError, domain_validation_handler)  # type: ignore[arg-type]
 app.add_exception_handler(LLMUpstreamError, llm_upstream_handler)  # type: ignore[arg-type]
 app.add_exception_handler(RequestValidationError, request_validation_handler)  # type: ignore[arg-type]
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)  # type: ignore[arg-type]
+app.add_exception_handler(Exception, unhandled_exception_handler)  # type: ignore[arg-type]
 
 
 @app.get("/api/health")

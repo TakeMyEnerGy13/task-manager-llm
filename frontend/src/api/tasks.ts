@@ -63,7 +63,7 @@ function buildQuery(filters: TaskFilters): string {
 
 export const tasksApi = {
   list: (filters: TaskFilters = {}) =>
-    api.get<TaskListResponse>(`/api/tasks${buildQuery({ top_level_only: true, ...filters })}`),
+    api.get<TaskListResponse>(`/api/tasks${buildQuery(filters)}`),
   get: (id: number) => api.get<Task>(`/api/tasks/${id}`),
   create: (data: TaskCreate) => api.post<Task>('/api/tasks', data),
   update: (id: number, data: TaskUpdate) => api.patch<Task>(`/api/tasks/${id}`, data),

@@ -12,7 +12,7 @@ import { useTasks } from './hooks/useTasks'
 type LLMAction = 'categorize' | 'decompose' | 'suggest_priority'
 
 export default function App() {
-  const [filters, setFilters] = useState<TaskFilters>({})
+  const [filters, setFilters] = useState<TaskFilters>({ top_level_only: true })
   const { data, isLoading } = useTasks(filters)
 
   const [formOpen, setFormOpen] = useState(false)

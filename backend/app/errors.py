@@ -1,6 +1,11 @@
+import logging
+
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger(__name__)
 
 
 class NotFoundError(Exception):
@@ -57,4 +62,21 @@ async def request_validation_handler(
     return JSONResponse(
         status_code=422,
         content=_error("request_validation", "Invalid request data", details),
+    )
+
+
+async def http_exception_handler(
+    request: Request, exc: StarletteHTTPException
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=_error("http_error", exc.detail or f"HTTP {exc.status_code}"),
+    )
+
+
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unhandled exception on %s %s", request.method, request.url.path)
+    return JSONResponse(
+        status_code=500,
+        content=_error("internal_error", "Internal server error"),
     )

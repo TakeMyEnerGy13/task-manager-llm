@@ -63,16 +63,17 @@ export function TaskForm({ open, onClose, task }: TaskFormProps) {
         await createMutation.mutateAsync(payload)
       }
       onClose()
-    } catch (err: any) {
-      if (err?.details) {
+    } catch (err: unknown) {
+      const apiErr = err instanceof Error ? err : null
+      const details = apiErr && 'details' in apiErr ? (apiErr as { details?: Record<string, string> }).details : undefined
+      if (details) {
         const errs: Record<string, string> = {}
-        for (const [k, v] of Object.entries(err.details)) {
-          const field = k.replace('body.', '')
-          errs[field] = String(v)
+        for (const [k, v] of Object.entries(details)) {
+          errs[k.replace('body.', '')] = String(v)
         }
         setFieldErrors(errs)
       } else {
-        toast.error(err?.message ?? 'Ошибка сохранения')
+        toast.error(apiErr?.message ?? 'Ошибка сохранения')
       }
     }
   }

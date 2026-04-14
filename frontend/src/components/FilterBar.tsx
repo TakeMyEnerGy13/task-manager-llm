@@ -33,7 +33,7 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
 
   function clearAll() {
     setSearch('')
-    onChange({})
+    onChange({ top_level_only: true })
   }
 
   const hasFilters =
@@ -131,8 +131,19 @@ export function FilterBar({ filters, onChange }: FilterBarProps) {
           </div>
         </div>
 
+        {/* Subtasks toggle */}
+        <label className="flex items-center gap-1.5 cursor-pointer ml-auto">
+          <input
+            type="checkbox"
+            checked={!filters.top_level_only}
+            onChange={(e) => onChange({ ...filters, top_level_only: !e.target.checked, offset: 0 })}
+            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-xs text-slate-600">Показать подзадачи</span>
+        </label>
+
         {hasFilters && (
-          <button onClick={clearAll} className="text-xs text-indigo-600 hover:underline ml-auto">
+          <button onClick={clearAll} className="text-xs text-indigo-600 hover:underline">
             Сбросить
           </button>
         )}
