@@ -101,7 +101,7 @@ npm run dev
 | `DATABASE_URL` | Нет | SQLite путь (default: `sqlite:///./tasks.db`) |
 | `ANTHROPIC_API_KEY` | Для LLM | Ключ API Anthropic |
 | `LLM_MODEL` | Нет | Модель Claude (default: `claude-haiku-4-5-20251001`) |
-| `CORS_ORIGINS` | Нет | Разрешённые origins (default: `http://localhost:5173`) |
+| `CORS_ORIGINS` | Нет | Разрешённые origins в JSON-формате (default: `["http://localhost:5173"]`) |
 
 ## Запуск тестов (backend)
 
@@ -110,7 +110,7 @@ cd backend
 pytest -v
 ```
 
-27 тестов: CRUD, фильтры, текстовый поиск, LLM-сервис (с мок-клиентом), API-эндпоинты.
+32 теста: CRUD, фильтры, текстовый поиск, LLM-сервис (с мок-клиентом), API-эндпоинты, целостность данных (FK, cascade delete, error envelopes).
 
 ## Архитектурные решения
 
