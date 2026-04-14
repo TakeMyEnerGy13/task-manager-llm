@@ -18,17 +18,24 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
-    ...init,
-  })
+  let res: Response
+  try {
+    res = await fetch(path, {
+      headers: { 'Content-Type': 'application/json', ...init?.headers },
+      ...init,
+    })
+  } catch {
+    throw new ApiError('network_error', 'Сервер недоступен. Убедитесь, что бэкенд запущен.')
+  }
 
   if (res.status === 204) return undefined as T
 
-  const json = await res.json()
+  const text = await res.text()
+  const json = text ? (JSON.parse(text) as unknown) : {}
 
   if (!res.ok) {
-    const err = json?.error ?? {}
+    const body = json as { error?: { code?: string; message?: string; details?: Record<string, string> } }
+    const err = body?.error ?? {}
     throw new ApiError(
       err.code ?? 'unknown',
       err.message ?? `HTTP ${res.status}`,
